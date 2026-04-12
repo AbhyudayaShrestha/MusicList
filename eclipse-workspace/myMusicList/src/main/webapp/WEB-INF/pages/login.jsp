@@ -30,7 +30,7 @@
     </form>
 
     <div class="divider"><span>or</span></div>
-    <a href="register">Don't have an account? <strong>Sign Up</strong></a>
+    <a href="register">Don't have an account yet? <strong>Sign Up</strong></a>
 </div>
 
 </body>
