@@ -9,7 +9,7 @@
 
 <div class="container">
     <div class="logo">🎵</div>
-    <h2>Welcome Back</h2>
+    <h2>Welcome User</h2>
     <p class="subtitle">Login to your MyMusicList account</p>
 
     <% String error = (String) request.getAttribute("error"); %>
