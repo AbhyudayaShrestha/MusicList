@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
+        
+    <wb-module deploy-name="myMusicList">
+                
+        <wb-resource deploy-path="/" source-path="/src/main/webapp" tag="defaultRootSource"/>
+                
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
+        <dependent-module archiveName="mysql-connector-j-9.6.0.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/lib/C:/Users/Abhyudaya Shrestha/OneDrive - islingtoncollege.edu.np/Year 2/DSA/Coursework/mysql-connector-j-9.6.0/mysql-connector-j-9.6.0.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+                
+        <property name="java-output-path" value="/myMusicList/build/classes"/>
+        <property name="context-root" value="myMusicList"/>
+            
+    </wb-module>
+    
+</project-modules>
