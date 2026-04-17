@@ -1,0 +1,17 @@
+<%@ page contentType="text/html;charset=UTF-8" isErrorPage="true" %>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Page Not Found – MyMusicList</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+</head>
+<body>
+<div class="container">
+    <div class="logo">🎵</div>
+    <h2>404 – Page Not Found</h2>
+    <p class="subtitle">Oops! This page doesn't exist.</p>
+    <br>
+    <a href="${pageContext.request.contextPath}/dashboard"><strong>← Go back to Dashboard</strong></a>
+</div>
+</body>
+</html>
