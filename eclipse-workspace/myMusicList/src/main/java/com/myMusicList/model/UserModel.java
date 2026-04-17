@@ -5,6 +5,7 @@ public class UserModel {
     private String name;
     private String email;
     private String password;
+    private String role;
     
     public UserModel() {}
 
@@ -47,5 +48,11 @@ public class UserModel {
 		this.password = password;
 	}
         
-    
+	public String getRole() {
+	    return role;
+	}
+
+	public void setRole(String role) {
+	    this.role = role;
+	}
 }

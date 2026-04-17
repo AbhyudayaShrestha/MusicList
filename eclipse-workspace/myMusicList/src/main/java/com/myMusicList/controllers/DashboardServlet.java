@@ -6,7 +6,10 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
+import com.myMusicList.model.SongModel;
 import com.myMusicList.model.UserModel;
+import com.myMusicList.service.SongService;
 
 @WebServlet("/dashboard")
 public class DashboardServlet extends HttpServlet {
@@ -17,11 +20,9 @@ public class DashboardServlet extends HttpServlet {
 
         UserModel user = (UserModel) request.getSession().getAttribute("loggedUser");
 
-        // If not logged in, send back to login
-        if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
+        SongService songService = new SongService();
+        List<SongModel> songs = songService.getAllSongs();
+        request.setAttribute("songs", songs);
 
         request.getRequestDispatcher("/WEB-INF/pages/dashboard.jsp")
                .forward(request, response);

@@ -8,61 +8,61 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import com.myMusicList.service.UserService;
 import com.myMusicList.model.UserModel;
+import com.myMusicList.util.ValidationUtil;
 
-/**
- * @author Abhyudaya Shrestha
- */
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
-	private static final long serialVersionUID = 1L;
-       
-    /**
-     * @see HttpServlet#HttpServlet()
-     */
-    public RegisterServlet() {
-        super();
-        // TODO Auto-generated constructor stub
+    private static final long serialVersionUID = 1L;
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        request.getRequestDispatcher("/WEB-INF/pages/register.jsp").forward(request, response);
     }
 
-	/**
-	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
-	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
-		request.getRequestDispatcher("/WEB-INF/pages/register.jsp").forward(request, response);
-	}
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-	/**
-	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
-	 */
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
-		// 1. Get form data
-	    String name     = request.getParameter("name");
-	    String email    = request.getParameter("email");
-	    String password = request.getParameter("password");
+    	String name = request.getParameter("name");
+    	String email = request.getParameter("email");
+    	String password = request.getParameter("password");
 
-	    // 2. Call service to save to DB
-	    UserService service = new UserService();
+    	if (name != null) name = name.trim();
+    	if (email != null) email = email.trim();
+    	if (password != null) password = password.trim();
 
-	    // 3. Check if email already taken
-	    if (service.emailExists(email)) {
-	        request.setAttribute("error", "Email already registered!");
-	        request.getRequestDispatcher("/WEB-INF/pages/register.jsp")
-	               .forward(request, response);
-	        return;
-	    }
-	 // 4. Save user
-	    UserModel user = new UserModel(name, email, password);
-	    boolean success = service.registerUser(user);
+     // Validate inputs using ValidationUtil
+        if (!ValidationUtil.isValidName(name)) {
+            request.setAttribute("error", "Name must be at least 2 characters.");
+            request.getRequestDispatcher("/WEB-INF/pages/register.jsp").forward(request, response);
+            return;
+        }
+        if (!ValidationUtil.isValidEmail(email)) {
+            request.setAttribute("error", "Please enter a valid email address.");
+            request.getRequestDispatcher("/WEB-INF/pages/register.jsp").forward(request, response);
+            return;
+        }
+        if (!ValidationUtil.isValidPassword(password)) {
+            request.setAttribute("error", "Password must be at least 8 characters.");
+            request.getRequestDispatcher("/WEB-INF/pages/register.jsp").forward(request, response);
+            return;
+        }
 
-	    // 5. Redirect to login if success, show error if not
-	    if (success) {
-	        response.sendRedirect(request.getContextPath() + "/login");
-	    } else {
-	        request.setAttribute("error", "Registration failed. Please try again.");
-	        request.getRequestDispatcher("/WEB-INF/pages/register.jsp")
-	               .forward(request, response);
-	    }
-	}
+        UserService service = new UserService();
+
+        if (service.emailExists(email)) {
+            request.setAttribute("error", "This email is already registered. Please login instead.");
+            request.getRequestDispatcher("/WEB-INF/pages/register.jsp").forward(request, response);
+            return;
+        }
+
+        UserModel user = new UserModel(name, email, password);
+        boolean success = service.registerUser(user);
+
+        if (success) {
+            response.sendRedirect(request.getContextPath() + "/login?registered=true");
+        } else {
+            request.setAttribute("error", "Registration failed. Please try again.");
+            request.getRequestDispatcher("/WEB-INF/pages/register.jsp").forward(request, response);
+        }
+    }
 }

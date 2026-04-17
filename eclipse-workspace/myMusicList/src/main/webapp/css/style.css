@@ -176,12 +176,13 @@ body {
 .logout-btn {
     padding: 8px 16px;
     background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    color: white !important;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-size: 13px;
     text-decoration: none;
+    display: inline-block !important;
 }
 
 .song-table {
@@ -205,4 +206,385 @@ body {
 
 .song-table tr:hover {
     background: #fafafa;
+}
+/* Admin Layout */
+.admin-wrapper {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.admin-sidebar {
+    width: 240px;
+    background: linear-gradient(180deg, #1a1a2e, #16213e);
+    color: white;
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: fixed;
+    height: 100vh;
+}
+
+.sidebar-logo {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.sidebar-role {
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 20px;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.nav-link {
+    color: #ccc;
+    text-decoration: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.nav-link:hover, .nav-link.active {
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.admin-main {
+    margin-left: 240px;
+    padding: 40px;
+    flex: 1;
+    background: #f4f6fb;
+    min-height: 100vh;
+}
+
+.admin-header {
+    margin-bottom: 30px;
+}
+
+.admin-header h1 {
+    font-size: 26px;
+    color: #1a1a2e;
+}
+
+.admin-section {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.section-header h2 {
+    font-size: 18px;
+    color: #1a1a2e;
+}
+
+.add-btn {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.action-btns {
+    display: flex;
+    gap: 8px;
+}
+
+.edit-btn {
+    padding: 5px 12px;
+    background: #667eea;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.delete-btn {
+    padding: 5px 12px;
+    background: #e05c5c;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 12px;
+}
+.alert.success {
+    background: #f0fff4;
+    border: 1px solid #b2f5c8;
+    color: #276749;
+}
+/* Override body for admin pages */
+body.admin-body {
+    display: block;
+    background: #f4f6fb;
+}
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.form-actions button {
+    width: auto;
+    padding: 10px 24px;
+}
+
+.cancel-btn {
+    font-size: 14px;
+    color: #888;
+    text-decoration: none;
+}
+
+.cancel-btn:hover {
+    color: #333;
+}
+.alert.info {
+    background: #f0f4ff;
+    border-color: #c5d0f5;
+    color: #3a52cc;
+}
+/* Responsiveness — mobile and tablet support */
+@media (max-width: 768px) {
+
+    /* Stack login/register card full width on small screens */
+    .container {
+        width: 90%;
+        padding: 30px 20px;
+    }
+
+    /* Stack dashboard card full width */
+    .dashboard-container {
+        width: 90%;
+    }
+
+    /* Collapse admin sidebar on small screens */
+    .admin-sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 16px;
+    }
+
+    .admin-main {
+        margin-left: 0;
+        padding: 20px;
+    }
+
+    .admin-wrapper {
+        flex-direction: column;
+    }
+
+    .sidebar-nav {
+        flex-direction: row;
+        flex: none;
+        gap: 6px;
+    }
+
+    /* Stack song table rows on small screens */
+    .song-table th,
+    .song-table td {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+}
+
+/* ===== Popup Modal ===== */
+
+/* Keyframe for the box popping in with a spring feel */
+@keyframes modalPopIn {
+    from {
+        opacity: 0;
+        transform: scale(0.85) translateY(24px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-overlay {
+    display: flex;                      /* always flex so transitions work */
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 36px 40px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    min-width: 280px;
+    max-width: 360px;
+    opacity: 0;
+    transform: scale(0.85) translateY(24px);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+}
+
+.modal-overlay.show .modal-box {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
+.modal-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+.modal-box h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+}
+
+.modal-box p {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 24px;
+}
+
+.modal-ok-btn {
+    padding: 10px 32px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.modal-ok-btn:hover {
+    opacity: 0.88;
+}
+
+/* ===== Logout Confirm Modal ===== */
+.logout-modal-overlay {
+    display: flex;                      /* always flex so transitions work */
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.logout-modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.logout-modal-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 36px 40px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    min-width: 280px;
+    max-width: 360px;
+    opacity: 0;
+    transform: scale(0.85) translateY(24px);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+}
+
+.logout-modal-overlay.show .logout-modal-box {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
+.logout-modal-box .modal-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+.logout-modal-box h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+}
+
+.logout-modal-box p {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 24px;
+}
+
+.logout-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.logout-confirm-btn {
+    padding: 10px 28px;
+    background: linear-gradient(135deg, #e05c5c, #c0392b);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.logout-confirm-btn:hover {
+    opacity: 0.88;
+}
+
+.logout-cancel-btn {
+    padding: 10px 28px;
+    background: #f0f0f7;
+    color: #444;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.logout-cancel-btn:hover {
+    background: #e0e0ee;
 }

@@ -1,12 +1,22 @@
 package com.myMusicList.service;
 
 import com.myMusicList.config.DbConfig;
+import java.util.ArrayList;
+import java.util.List;
 import com.myMusicList.model.UserModel;
 import java.sql.*;
 import org.mindrot.jbcrypt.BCrypt;
 
+/**
+ * Service class for user-related database operations.
+ * Handles registration, login validation, and fetching users.
+ */
 public class UserService {
 
+    /**
+     * Registers a new user by saving their details to the database.
+     * Password is hashed using BCrypt before storing.
+     */
     public boolean registerUser(UserModel user) {
         String sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
         String hashedPassword = BCrypt.hashpw(user.getPassword(), BCrypt.gensalt());
@@ -25,6 +35,10 @@ public class UserService {
         }
     }
 
+    /**
+     * Checks if an email address is already registered in the database.
+     * Used to prevent duplicate accounts.
+     */
     public boolean emailExists(String email) {
         String sql = "SELECT id FROM users WHERE email = ?";
 
@@ -39,8 +53,14 @@ public class UserService {
             return false;
         }
     }
+
+    /**
+     * Validates login credentials.
+     * Fetches the user by email and checks the password against the stored BCrypt hash.
+     * Returns the UserModel if valid, null if invalid.
+     */
     public UserModel validateUser(String email, String password) {
-        String sql = "SELECT id, name, email, password FROM users WHERE email = ?";
+        String sql = "SELECT id, name, email, password, role FROM users WHERE email = ?";
 
         try (Connection conn = DbConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -50,11 +70,13 @@ public class UserService {
 
             if (rs.next()) {
                 String storedHash = rs.getString("password");
+                // Verify the entered password against the stored hash
                 if (BCrypt.checkpw(password, storedHash)) {
                     UserModel user = new UserModel();
                     user.setId(rs.getInt("id"));
                     user.setName(rs.getString("name"));
                     user.setEmail(rs.getString("email"));
+                    user.setRole(rs.getString("role"));
                     return user;
                 }
             }
@@ -62,5 +84,32 @@ public class UserService {
             System.err.println("Login error: " + e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * Retrieves all users from the database.
+     * Used by the admin dashboard to display the users list.
+     */
+    public List<UserModel> getAllUsers() {
+        List<UserModel> users = new ArrayList<>();
+        String sql = "SELECT id, name, email, role FROM users";
+
+        try (Connection conn = DbConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                UserModel user = new UserModel();
+                user.setId(rs.getInt("id"));
+                user.setName(rs.getString("name"));
+                user.setEmail(rs.getString("email"));
+                user.setRole(rs.getString("role"));
+                users.add(user);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error fetching users: " + e.getMessage());
+        }
+        return users;
     }
 }
