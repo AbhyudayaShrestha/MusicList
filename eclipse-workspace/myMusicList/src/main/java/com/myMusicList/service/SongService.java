@@ -8,43 +8,74 @@ import java.util.List;
 
 public class SongService {
 
+    /** All songs ordered by title — used by member dashboard base call */
     public List<SongModel> getAllSongs() {
+        return searchAndSort("", "title");
+    }
+
+    /**
+     * Member dashboard: search + sort (always ascending).
+     */
+    public List<SongModel> searchAndSort(String keyword, String sortBy) {
+        return searchAndSortAdmin(keyword, sortBy, "asc");
+    }
+
+    /**
+     * Admin dashboard: search + sort with asc/desc support.
+     * @param keyword  search term (empty = all)
+     * @param sortBy   title | artist | genre
+     * @param order    asc | desc
+     */
+    public List<SongModel> searchAndSortAdmin(String keyword, String sortBy, String order) {
         List<SongModel> songs = new ArrayList<>();
-        String sql = "SELECT id, title, artist, genre FROM songs";
+
+        // Whitelist sort column
+        String col = "title";
+        if ("artist".equals(sortBy)) col = "artist";
+        else if ("genre".equals(sortBy)) col = "genre";
+
+        // Whitelist order direction
+        String dir = "desc".equalsIgnoreCase(order) ? "DESC" : "ASC";
+
+        String sql = "SELECT id, title, artist, genre FROM songs " +
+                     "WHERE LOWER(title)  LIKE LOWER(?) " +
+                     "   OR LOWER(artist) LIKE LOWER(?) " +
+                     "   OR LOWER(genre)  LIKE LOWER(?) " +
+                     "ORDER BY " + col + " " + dir;
+
+        String like = "%" + keyword + "%";
 
         try (Connection conn = DbConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, like);
+            ps.setString(2, like);
+            ps.setString(3, like);
+            ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                SongModel song = new SongModel(
+                songs.add(new SongModel(
                     rs.getInt("id"),
                     rs.getString("title"),
                     rs.getString("artist"),
                     rs.getString("genre")
-                );
-                songs.add(song);
+                ));
             }
-
         } catch (SQLException e) {
-            System.err.println("Error fetching songs: " + e.getMessage());
+            System.err.println("Error searching songs: " + e.getMessage());
         }
         return songs;
     }
 
-    // NEW: Check if a song with the same title AND artist already exists
-    // excludeId is used during edit so we don't flag the song against itself (-1 for add)
     public boolean songExists(String title, String artist, int excludeId) {
-        String sql = "SELECT id FROM songs WHERE LOWER(title) = LOWER(?) AND LOWER(artist) = LOWER(?) AND id != ?";
+        String sql = "SELECT id FROM songs WHERE LOWER(title) = LOWER(?) " +
+                     "AND LOWER(artist) = LOWER(?) AND id != ?";
         try (Connection conn = DbConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, title.trim());
             ps.setString(2, artist.trim());
             ps.setInt(3, excludeId);
-            ResultSet rs = ps.executeQuery();
-            return rs.next();
+            return ps.executeQuery().next();
         } catch (SQLException e) {
-            System.err.println("Error checking duplicate song: " + e.getMessage());
+            System.err.println("Error checking duplicate: " + e.getMessage());
             return false;
         }
     }
@@ -97,12 +128,8 @@ public class SongService {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                return new SongModel(
-                    rs.getInt("id"),
-                    rs.getString("title"),
-                    rs.getString("artist"),
-                    rs.getString("genre")
-                );
+                return new SongModel(rs.getInt("id"), rs.getString("title"),
+                                     rs.getString("artist"), rs.getString("genre"));
             }
         } catch (SQLException e) {
             System.err.println("Error fetching song: " + e.getMessage());
