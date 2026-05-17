@@ -1,15 +1,24 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="com.myMusicList.model.UserModel" %>
+<%@ page import="com.myMusicList.model.SongModel" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.List" %>
 <%
     UserModel user = (UserModel) session.getAttribute("loggedUser");
-    request.setAttribute("activeNav", "contact");
+
+    // Loaded from DB by RecentlyPlayedServlet (most-recent first / LIFO stack order)
+    @SuppressWarnings("unchecked")
+    List<SongModel> recentList = (List<SongModel>) request.getAttribute("recentList");
+    if (recentList == null) recentList = new ArrayList<>();
+
+    request.setAttribute("activeNav", "recentlyPlayed");
 %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact – MyMusicList</title>
+    <title>Recently Played – MyMusicList</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -58,7 +67,7 @@
             <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h10M3 15h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="16" cy="15" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M15 15l.7.7 1.3-1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Queue
         </a>
-        <a href="${pageContext.request.contextPath}/recentlyPlayed" class="nav-link">
+        <a href="${pageContext.request.contextPath}/recentlyPlayed" class="nav-link active">
             <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Recently Played
         </a>
@@ -66,13 +75,12 @@
             <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5M10 7h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             About Us
         </a>
-        <a href="${pageContext.request.contextPath}/contact" class="nav-link active">
+        <a href="${pageContext.request.contextPath}/contact" class="nav-link">
             <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><path d="M2.5 5.5A1.5 1.5 0 014 4h12a1.5 1.5 0 011.5 1.5v9A1.5 1.5 0 0116 16H4a1.5 1.5 0 01-1.5-1.5v-9z" stroke="currentColor" stroke-width="1.5"/><path d="M2.5 6l7.5 5 7.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             Contact
         </a>
         </nav>
         <div class="sidebar-bottom">
-            <!-- profile + logout at the bottom -->
             <a href="${pageContext.request.contextPath}/profile" class="sidebar-profile-link">
                 <div class="sidebar-pfp">
                     <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -90,71 +98,89 @@
         </div>
     </aside>
 
-    <!-- main content -->
     <main class="member-main">
 
+        <!-- summary card -->
+        <div class="rp-top-card">
+    <div class="rp-top-text">
+        <h2>Recently Played</h2>
+    </div>
+
+    <div class="rp-top-meta">
+        <div class="rp-top-count"><%= recentList.size() %></div>
+        <div class="rp-top-label">tracks played</div>
+    </div>
+</div>
+
         <div class="member-card">
-            <!-- page header -->
-            <div class="contact-hero-compact">
-                <div class="contact-hero-icon">📩</div>
-                <div>
-                    <h1>Contact & Support</h1>
-                    <p>Reach out to our support team through any of the channels below.</p>
+            <div class="card-header">
+                <div class="card-header-left">
+                    <h2>History</h2>
+                    <span class="badge-count"><%= recentList.size() %> songs</span>
+                </div>
+                <div class="rp-action-row">
+                    <a href="${pageContext.request.contextPath}/queue" class="add-btn add-btn-sm">
+                        <svg viewBox="0 0 16 16" fill="none" class="icon-sm">
+                            <path d="M2 4h12M2 8h9M2 12h6" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+                            <circle cx="13" cy="12" r="2.5" stroke="white" stroke-width="1.5"/>
+                        </svg>
+                        Go to Queue
+                    </a>
+                    <% if (!recentList.isEmpty()) { %>
+                    <form action="${pageContext.request.contextPath}/recentlyPlayed" method="post">
+                        <input type="hidden" name="action" value="clear">
+                        <button type="submit" class="clear-history-btn">Clear History</button>
+                    </form>
+                    <% } %>
                 </div>
             </div>
 
-            <hr class="contact-divider">
-
-            <h3 class="contact-support-title">⚙️ Support Details</h3>
-
-            <div class="contact-support-grid">
-                <div class="contact-support-item">
-                    <span class="contact-support-icon">📩</span>
-                    <div>
-                        <strong>Email Support</strong>
-                        <p>support@mymusiclist.edu</p>
-                        <small>Response within 24 hours on working days</small>
-                    </div>
-                </div>
-
-                <div class="contact-support-item">
-                    <span class="contact-support-icon">📱</span>
-                    <div>
-                        <strong>Phone</strong>
-                        <p>+977 01-4XXXXXX</p>
-                        <small>Mon – Fri, 9 AM – 5 PM (NPT)</small>
-                    </div>
-                </div>
-
-                <div class="contact-support-item">
-                    <span class="contact-support-icon">📌</span>
-                    <div>
-                        <strong>Location</strong>
-                        <p>Faculty of Computing &amp; IT</p>
-                        <small>Kathmandu, Nepal</small>
-                    </div>
-                </div>
-
-                <div class="contact-support-item">
-                    <span class="contact-support-icon">⏰</span>
-                    <div>
-                        <strong>Office Hours</strong>
-                        <p>Sunday – Friday</p>
-                        <small>9:00 AM – 5:00 PM (NPT)</small>
-                    </div>
-                </div>
+            <% if (recentList.isEmpty()) { %>
+            <div class="empty-state">
+    <p>No songs played.</p>
+</div>
+            <% } else { %>
+            <div class="table-wrap">
+                <table class="song-table">
+                    <thead>
+                        <tr>
+                            <th class="th-num">#</th>
+                            <th>Title</th>
+                            <th>Artist</th>
+                            <th>Genre</th>
+                            <th>Add to Queue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <%
+                        int rIdx = 0;
+                        for (SongModel rs : recentList) {
+                            rIdx++;
+                            String rankClass = rIdx == 1 ? "top1" : rIdx == 2 ? "top2" : rIdx == 3 ? "top3" : "";
+                    %>
+                    <tr>
+                        <td class="rp-row-num">
+                            <span class="rp-rank-badge <%= rankClass %>"><%= rIdx %></span>
+                        </td>
+                        <td>
+                            <span class="song-title"><%= rs.getTitle() %></span>
+                            <% if (rIdx == 1) { %><span class="rp-label rp-label-ml">latest</span><% } %>
+                        </td>
+                        <td class="song-artist"><%= rs.getArtist() %></td>
+                        <td><span class="genre-tag"><%= rs.getGenre() %></span></td>
+                        <td>
+                            <form action="${pageContext.request.contextPath}/queue" method="post">
+                                <input type="hidden" name="action"  value="add">
+                                <input type="hidden" name="songId"  value="<%= rs.getId() %>">
+                                <button type="submit" class="add-to-queue-mini">+ Queue</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <% } %>
+                    </tbody>
+                </table>
             </div>
-
-            <!-- common issues tip -->
-            <div class="contact-faq-banner">
-                <span>ℹ️</span>
-                <div>
-                    <strong>Common Issues:</strong>
-                    For password resets or account problems, visit your
-                    <a href="${pageContext.request.contextPath}/profile">Profile page</a> first
-                    or use <a href="${pageContext.request.contextPath}/forgot-password">Forgot Password</a>.
-                </div>
-            </div>
+            <% } %>
         </div>
 
     </main>

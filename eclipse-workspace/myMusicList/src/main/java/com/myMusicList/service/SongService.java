@@ -6,35 +6,27 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+// all DB operations for songs
 public class SongService {
 
-    /** All songs ordered by title — used by member dashboard base call */
     public List<SongModel> getAllSongs() {
         return searchAndSort("", "title");
     }
 
-    /**
-     * Member dashboard: search + sort (always ascending).
-     */
+    // used by the member dashboard — search + sort, always ascending
     public List<SongModel> searchAndSort(String keyword, String sortBy) {
         return searchAndSortAdmin(keyword, sortBy, "asc");
     }
 
-    /**
-     * Admin dashboard: search + sort with asc/desc support.
-     * @param keyword  search term (empty = all)
-     * @param sortBy   title | artist | genre
-     * @param order    asc | desc
-     */
+    // used by the admin dashboard — supports both sort directions
     public List<SongModel> searchAndSortAdmin(String keyword, String sortBy, String order) {
         List<SongModel> songs = new ArrayList<>();
 
-        // Whitelist sort column
+        // whitelist the column to prevent SQL injection in ORDER BY
         String col = "title";
         if ("artist".equals(sortBy)) col = "artist";
         else if ("genre".equals(sortBy)) col = "genre";
 
-        // Whitelist order direction
         String dir = "desc".equalsIgnoreCase(order) ? "DESC" : "ASC";
 
         String sql = "SELECT id, title, artist, genre FROM songs " +
@@ -65,6 +57,7 @@ public class SongService {
         return songs;
     }
 
+    // excludeId skips the current song when checking duplicates during an edit
     public boolean songExists(String title, String artist, int excludeId) {
         String sql = "SELECT id FROM songs WHERE LOWER(title) = LOWER(?) " +
                      "AND LOWER(artist) = LOWER(?) AND id != ?";
@@ -128,8 +121,12 @@ public class SongService {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                return new SongModel(rs.getInt("id"), rs.getString("title"),
-                                     rs.getString("artist"), rs.getString("genre"));
+                return new SongModel(
+                    rs.getInt("id"),
+                    rs.getString("title"),
+                    rs.getString("artist"),
+                    rs.getString("genre")
+                );
             }
         } catch (SQLException e) {
             System.err.println("Error fetching song: " + e.getMessage());

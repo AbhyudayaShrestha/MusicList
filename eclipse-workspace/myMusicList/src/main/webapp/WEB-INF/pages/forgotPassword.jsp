@@ -15,10 +15,10 @@
 <body class="auth-page">
 
 <div class="container">
-    <div class="logo">🔑</div>
+    <div class="logo">🔐</div>
 
     <% if (step == 1) { %>
-    <!-- ── Step 1: Enter Email ──────────────────────────────────── -->
+    <!-- step 1: enter email -->
     <h2>Forgot Password</h2>
     <p class="subtitle">Enter your email to find your account</p>
 
@@ -27,7 +27,7 @@
     <form action="${pageContext.request.contextPath}/forgot-password" method="post">
         <input type="hidden" name="step" value="1">
         <div class="input-group">
-            <span class="input-icon">✉</span>
+            <span class="input-icon">📧</span>
             <input type="email" name="email" placeholder="Your email address" required autofocus>
         </div>
         <button type="submit">Find My Account</button>
@@ -37,7 +37,7 @@
     <a href="${pageContext.request.contextPath}/login">← Back to Login</a>
 
     <% } else if (step == 2) { %>
-    <!-- ── Step 2: Answer Security Question ─────────────────────── -->
+    <!-- step 2: answer security question -->
     <h2>Security Question</h2>
     <p class="subtitle">Answer your security question to continue</p>
 
@@ -52,7 +52,7 @@
         <input type="hidden" name="step"  value="2">
         <input type="hidden" name="email" value="<%= email %>">
         <div class="input-group">
-            <span class="input-icon">💬</span>
+            <span class="input-icon">📝</span>
             <input type="text" name="answer" placeholder="Your answer" required autofocus>
         </div>
         <button type="submit">Verify Answer</button>
@@ -62,7 +62,7 @@
     <a href="${pageContext.request.contextPath}/forgot-password">← Start Over</a>
 
     <% } else if (step == 3) { %>
-    <!-- ── Step 3: Set New Password ─────────────────────────────── -->
+    <!-- step 3: set new password -->
     <h2>Set New Password</h2>
     <p class="subtitle">Choose a strong new password</p>
 
@@ -72,7 +72,7 @@
         <input type="hidden" name="step"  value="3">
         <input type="hidden" name="email" value="<%= email %>">
         <div class="input-group">
-            <span class="input-icon">🔒</span>
+            <span class="input-icon">🗝️</span>
             <input type="password" name="newPassword" placeholder="New password (min 8 chars)"
                    minlength="8" required autofocus>
         </div>

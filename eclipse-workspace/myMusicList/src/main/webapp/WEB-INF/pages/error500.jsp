@@ -4,12 +4,21 @@
 <head>
     <title>Server Error – MyMusicList</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
-    <div class="logo">🎵</div>
+    <div class="logo">😵</div>
     <h2>500 – Something Went Wrong</h2>
-    <p class="subtitle">We hit a snag on our end. Please try again shortly.</p>
+    <p class="subtitle">Something broke on our end — please try again in a bit.</p>
     <br>
     <a href="${pageContext.request.contextPath}/dashboard"><strong>← Go back to Dashboard</strong></a>
 </div>

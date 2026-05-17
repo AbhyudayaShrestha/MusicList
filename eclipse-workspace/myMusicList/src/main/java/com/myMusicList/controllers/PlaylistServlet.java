@@ -2,6 +2,7 @@ package com.myMusicList.controllers;
 
 import com.myMusicList.model.UserModel;
 import com.myMusicList.model.PlaylistModel;
+import com.myMusicList.model.SongModel;
 import com.myMusicList.service.PlaylistService;
 import com.myMusicList.service.SongService;
 import jakarta.servlet.ServletException;
@@ -11,18 +12,12 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Handles add/remove playlist actions AND serves the /playlist page.
- *
- * GET  /playlist          → display the user's playlist page
- * POST /playlist (add)    → add song, redirect to dashboard
- * POST /playlist (remove) → remove song, redirect back to caller (dashboard or playlist)
- */
+// shows the user's saved playlist and handles add/remove actions
+// the "redirect" param controls where you land after the action (dashboard or playlist page)
 @WebServlet("/playlist")
 public class PlaylistServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
-    /** GET → serve the My Playlist page */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -34,12 +29,18 @@ public class PlaylistServlet extends HttpServlet {
         }
 
         PlaylistService ps = new PlaylistService();
-        List<PlaylistModel> playlist = ps.getPlaylistByUser(user.getId());
-        request.setAttribute("playlist", playlist);
+        List<PlaylistModel> playlist     = ps.getPlaylistByUser(user.getId());
+        List<Integer> playlistSongIds    = ps.getPlaylistSongIds(user.getId());
+
+        SongService ss = new SongService();
+        List<SongModel> allSongs = ss.getAllSongs();
+
+        request.setAttribute("playlist",       playlist);
+        request.setAttribute("playlistSongIds", playlistSongIds);
+        request.setAttribute("allSongs",        allSongs);
         request.getRequestDispatcher("/WEB-INF/pages/playlist.jsp").forward(request, response);
     }
 
-    /** POST → add or remove a song from the playlist */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -52,7 +53,7 @@ public class PlaylistServlet extends HttpServlet {
 
         String action     = request.getParameter("action");
         String songIdStr  = request.getParameter("songId");
-        String redirectTo = request.getParameter("redirect"); // "playlist" or null (→ dashboard)
+        String redirectTo = request.getParameter("redirect");
 
         if (songIdStr == null || action == null) {
             response.sendRedirect(request.getContextPath() + "/dashboard");
@@ -62,6 +63,8 @@ public class PlaylistServlet extends HttpServlet {
         try {
             int songId = Integer.parseInt(songIdStr);
             PlaylistService service = new PlaylistService();
+
+            // go back to wherever the request came from
             String backUrl = "playlist".equals(redirectTo)
                     ? request.getContextPath() + "/playlist"
                     : request.getContextPath() + "/dashboard";

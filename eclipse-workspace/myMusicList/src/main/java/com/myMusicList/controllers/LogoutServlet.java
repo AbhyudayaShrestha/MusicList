@@ -8,11 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-/**
- * Handles logout — destroys session and clears the rememberedEmail cookie.
- * Note: the cookie is only cleared if "Remember Me" was NOT checked.
- * If it was checked, the cookie stays so email is pre-filled on next visit.
- */
+// kills the session and wipes the remember-me cookie
 @WebServlet("/logout")
 public class LogoutServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
@@ -22,14 +18,13 @@ public class LogoutServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Destroy the session
         if (request.getSession(false) != null) {
             request.getSession().invalidate();
         }
 
-        // Clear the rememberedEmail cookie on logout
+        // max-age 0 tells the browser to delete the cookie immediately
         Cookie clearCookie = new Cookie(REMEMBER_COOKIE, "");
-        clearCookie.setMaxAge(0); // delete immediately
+        clearCookie.setMaxAge(0);
         clearCookie.setPath(request.getContextPath() + "/");
         response.addCookie(clearCookie);
 

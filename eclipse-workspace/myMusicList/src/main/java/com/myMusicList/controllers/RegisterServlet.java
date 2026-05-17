@@ -8,13 +8,11 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
-/**
- * Handles user registration.
- * Now collects security question + answer for the forgot-password flow.
- */
+// new account registration — also collects a security question for the forgot-password flow
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
@@ -22,6 +20,21 @@ public class RegisterServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
+        // already logged in? send them home
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            UserModel loggedUser = (UserModel) session.getAttribute("loggedUser");
+            if (loggedUser != null) {
+                if ("admin".equals(loggedUser.getRole())) {
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/dashboard");
+                }
+                return;
+            }
+        }
+
         request.getRequestDispatcher("/WEB-INF/pages/register.jsp").forward(request, response);
     }
 
@@ -37,7 +50,7 @@ public class RegisterServlet extends HttpServlet {
 
         UserService service = new UserService();
 
-        // ── Validation ────────────────────────────────────────────────
+        // validate each field in order, bail on first failure
         if (!ValidationUtil.isValidName(name)) {
             request.setAttribute("error", "Name must be at least 2 characters.");
             request.getRequestDispatcher("/WEB-INF/pages/register.jsp").forward(request, response);
@@ -69,7 +82,6 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
-        // ── Create user ───────────────────────────────────────────────
         UserModel user = new UserModel();
         user.setName(name.trim());
         user.setEmail(email.trim().toLowerCase());

@@ -10,23 +10,20 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-/**
- * 3-step forgot password flow (security question method):
- *
- * Step 1 → user enters their email
- * Step 2 → user answers their security question
- * Step 3 → user sets a new password
- */
+// password reset flow — three steps:
+//   1. enter email  2. answer security question  3. pick new password
 @WebServlet("/forgot-password")
 public class ForgotpasswordServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
+    // session keys to track where the user is in the flow
     private static final String SESSION_EMAIL    = "fp_email";
     private static final String SESSION_VERIFIED = "fp_verified";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // clear any leftover flow state on fresh visit
         request.getSession().removeAttribute(SESSION_EMAIL);
         request.getSession().removeAttribute(SESSION_VERIFIED);
         request.setAttribute("step", 1);
@@ -45,8 +42,7 @@ public class ForgotpasswordServlet extends HttpServlet {
         }
     }
 
-    // ── Step 1: Find account ──────────────────────────────────────────
-
+    // step 1 — verify the email exists and has a security question set up
     private void handleStep1(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -55,9 +51,6 @@ public class ForgotpasswordServlet extends HttpServlet {
 
         UserService service = new UserService();
 
-        // FIX: Check email existence separately from security question existence.
-        // Previously, if the email existed but had no security question (NULL),
-        // it would say "email not found" — which is wrong and confusing.
         if (email == null || email.isEmpty() || !service.emailExists(email)) {
             request.setAttribute("step", 1);
             request.setAttribute("error", "No account found with that email address.");
@@ -67,7 +60,7 @@ public class ForgotpasswordServlet extends HttpServlet {
 
         String question = service.getSecurityQuestion(email);
 
-        // Email exists but no security question set (old account before the feature)
+        // account exists but was registered before the security question feature
         if (question == null || question.trim().isEmpty()) {
             request.setAttribute("step", 1);
             request.setAttribute("error",
@@ -84,8 +77,7 @@ public class ForgotpasswordServlet extends HttpServlet {
         forward(request, response);
     }
 
-    // ── Step 2: Verify security answer ───────────────────────────────
-
+    // step 2 — check the security answer
     private void handleStep2(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -122,8 +114,7 @@ public class ForgotpasswordServlet extends HttpServlet {
         forward(request, response);
     }
 
-    // ── Step 3: Set new password ──────────────────────────────────────
-
+    // step 3 — set the new password (only reachable after step 2 passes)
     private void handleStep3(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -159,6 +150,7 @@ public class ForgotpasswordServlet extends HttpServlet {
         UserService service = new UserService();
         boolean reset = service.resetPassword(email, newPassword);
 
+        // clear flow state regardless of outcome
         request.getSession().removeAttribute(SESSION_EMAIL);
         request.getSession().removeAttribute(SESSION_VERIFIED);
 

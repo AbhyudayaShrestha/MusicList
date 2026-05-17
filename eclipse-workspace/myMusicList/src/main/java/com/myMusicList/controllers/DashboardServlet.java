@@ -14,14 +14,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Dashboard controller – serves the main member landing page.
- *
- * Supports:
- *  - Search: ?search=keyword  (searches title, artist, genre)
- *  - Sort:   ?sort=title|artist|genre  (default: title)
- *  - Playlist data for the logged-in user
- */
+// main page for logged-in users — song library with search/sort
+// also pulls playlist song IDs so each row knows if it's already saved
 @WebServlet("/dashboard")
 public class DashboardServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
@@ -30,40 +24,40 @@ public class DashboardServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        // back button after logout must not show a cached version
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
+
         UserModel user = (UserModel) request.getSession().getAttribute("loggedUser");
         if (user == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        // ── Search & Sort parameters ────────────────────────────────────
         String search = request.getParameter("search");
         String sort   = request.getParameter("sort");
+        String order  = request.getParameter("order");
 
         if (search == null) search = "";
-        if (sort == null || (!sort.equals("artist") && !sort.equals("genre"))) {
-            sort = "title";   // safe default
-        }
+        if (sort == null || !sort.equals("artist")) sort = "title";
+        if (order == null || !order.equals("desc"))  order = "asc";
 
-        // ── Fetch songs (filtered + sorted at DB level) ─────────────────
         SongService songService = new SongService();
-        List<SongModel> songs = songService.searchAndSort(search.trim(), sort);
+        List<SongModel> songs = songService.searchAndSortAdmin(search.trim(), sort, order);
 
-        // ── Fetch this user's playlist ──────────────────────────────────
         PlaylistService playlistService = new PlaylistService();
         List<PlaylistModel> playlist = playlistService.getPlaylistByUser(user.getId());
-
-        // A Set of song IDs already in the playlist – lets the JSP mark rows
+        // load IDs separately so we don't need a DB call per song row
         List<Integer> playlistIds = playlistService.getPlaylistSongIds(user.getId());
 
-        // ── Pass to JSP ─────────────────────────────────────────────────
         request.setAttribute("songs",       songs);
         request.setAttribute("playlist",    playlist);
         request.setAttribute("playlistIds", playlistIds);
         request.setAttribute("search",      search);
         request.setAttribute("sort",        sort);
+        request.setAttribute("order",       order);
 
-        request.getRequestDispatcher("/WEB-INF/pages/dashboard.jsp")
-               .forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/pages/dashboard.jsp").forward(request, response);
     }
 }

@@ -5,7 +5,7 @@ import jakarta.servlet.http.*;
 import com.myMusicList.model.UserModel;
 import java.io.IOException;
 
-// URL mapped in web.xml — no @WebServlet annotation needed
+// URL mapped in web.xml
 public class ContactServlet extends HttpServlet {
 
     @Override
@@ -19,6 +19,7 @@ public class ContactServlet extends HttpServlet {
             res.sendRedirect(req.getContextPath() + "/login");
             return;
         }
+        // contact page is for regular users only
         if ("admin".equals(user.getRole())) {
             res.sendRedirect(req.getContextPath() + "/admin/dashboard");
             return;
@@ -43,11 +44,13 @@ public class ContactServlet extends HttpServlet {
             return;
         }
 
+        // read and trim all fields
         String name    = req.getParameter("name")    != null ? req.getParameter("name").trim()    : "";
         String email   = req.getParameter("email")   != null ? req.getParameter("email").trim()   : "";
         String subject = req.getParameter("subject") != null ? req.getParameter("subject").trim() : "";
         String message = req.getParameter("message") != null ? req.getParameter("message").trim() : "";
 
+        // all fields required
         if (name.isEmpty() || email.isEmpty() || subject.isEmpty() || message.isEmpty()) {
             req.setAttribute("contactError", "All fields are required. Please fill in the form completely.");
             req.setAttribute("formName",    name);
@@ -58,6 +61,7 @@ public class ContactServlet extends HttpServlet {
             return;
         }
 
+        // basic email format check
         if (!email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
             req.setAttribute("contactError", "Please enter a valid email address.");
             req.setAttribute("formName",    name);

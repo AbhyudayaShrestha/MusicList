@@ -6,6 +6,8 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import com.myMusicList.model.UserModel;
 
+// runs on every request — enforces login and role-based access
+// public paths (login, register, forgot-password, static assets) pass straight through
 @WebFilter("/*")
 public class AuthFilter implements Filter {
 
@@ -15,6 +17,7 @@ public class AuthFilter implements Filter {
 
         HttpServletRequest  req  = (HttpServletRequest)  request;
         HttpServletResponse res  = (HttpServletResponse) response;
+
         String path = req.getServletPath();
         HttpSession session = req.getSession(false);
         UserModel loggedUser = (session != null) ? (UserModel) session.getAttribute("loggedUser") : null;
@@ -29,8 +32,10 @@ public class AuthFilter implements Filter {
         if (isPublic) {
             chain.doFilter(request, response);
         } else if (loggedUser == null) {
+            // not logged in — redirect to login
             res.sendRedirect(req.getContextPath() + "/login");
         } else if (path.startsWith("/admin") && !"admin".equals(loggedUser.getRole())) {
+            // regular user trying to hit an admin URL
             res.sendRedirect(req.getContextPath() + "/dashboard");
         } else {
             chain.doFilter(request, response);

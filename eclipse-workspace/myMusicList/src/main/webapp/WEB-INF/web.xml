@@ -5,12 +5,12 @@
              https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
          version="5.0">
 
-    <!-- Default landing page → redirects to login via AuthFilter -->
+    <!-- default page, auth filter handles the redirect -->
     <welcome-file-list>
         <welcome-file>login</welcome-file>
     </welcome-file-list>
 
-    <!-- ── Custom Error Pages ───────────────────────────────────── -->
+    <!-- custom error pages -->
     <error-page>
         <error-code>404</error-code>
         <location>/WEB-INF/pages/error404.jsp</location>
@@ -20,13 +20,8 @@
         <location>/WEB-INF/pages/error500.jsp</location>
     </error-page>
 
-    <!--
-        Existing servlets use @WebServlet annotations (no entry needed).
-        AboutServlet and ContactServlet are explicitly registered here
-        to guarantee Tomcat picks them up without relying on annotation scanning.
-    -->
-
-    <!-- ── AboutServlet ─────────────────────────────────────────── -->
+    <!-- about and contact registered explicitly; others use @WebServlet -->
+    <!-- about page -->
     <servlet>
         <servlet-name>AboutServlet</servlet-name>
         <servlet-class>com.myMusicList.controllers.AboutServlet</servlet-class>
@@ -36,7 +31,7 @@
         <url-pattern>/about</url-pattern>
     </servlet-mapping>
 
-    <!-- ── ContactServlet ───────────────────────────────────────── -->
+    <!-- contact page -->
     <servlet>
         <servlet-name>ContactServlet</servlet-name>
         <servlet-class>com.myMusicList.controllers.ContactServlet</servlet-class>
@@ -44,6 +39,26 @@
     <servlet-mapping>
         <servlet-name>ContactServlet</servlet-name>
         <url-pattern>/contact</url-pattern>
+    </servlet-mapping>
+
+    <!-- queue page -->
+    <servlet>
+        <servlet-name>QueueServlet</servlet-name>
+        <servlet-class>com.myMusicList.controllers.QueueServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>QueueServlet</servlet-name>
+        <url-pattern>/queue</url-pattern>
+    </servlet-mapping>
+
+    <!-- recently played page -->
+    <servlet>
+        <servlet-name>RecentlyPlayedServlet</servlet-name>
+        <servlet-class>com.myMusicList.controllers.RecentlyPlayedServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>RecentlyPlayedServlet</servlet-name>
+        <url-pattern>/recentlyPlayed</url-pattern>
     </servlet-mapping>
 
 </web-app>

@@ -11,6 +11,7 @@ import com.myMusicList.model.UserModel;
 import com.myMusicList.service.SongService;
 import com.myMusicList.util.ValidationUtil;
 
+// admin song management — add, edit, delete
 @WebServlet("/admin/songs")
 public class SongServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
@@ -25,22 +26,23 @@ public class SongServlet extends HttpServlet {
 
         switch (action) {
             case "add":
-                request.getRequestDispatcher("/WEB-INF/pages/addSong.jsp")
-                       .forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/pages/addSong.jsp").forward(request, response);
                 break;
 
             case "edit":
-                int id = Integer.parseInt(request.getParameter("id"));
-                SongModel song = service.getSongById(id);
-                request.setAttribute("song", song);
-                request.getRequestDispatcher("/WEB-INF/pages/editSong.jsp")
-                       .forward(request, response);
-                break;
-
-            case "delete":
-                int deleteId = Integer.parseInt(request.getParameter("id"));
-                service.deleteSong(deleteId);
-                response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=songs&songSuccess=deleted");
+                // bad or missing ID? redirect cleanly rather than throw a 500
+                try {
+                    int id = Integer.parseInt(request.getParameter("id"));
+                    SongModel song = service.getSongById(id);
+                    if (song == null) {
+                        response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=songs");
+                        return;
+                    }
+                    request.setAttribute("song", song);
+                    request.getRequestDispatcher("/WEB-INF/pages/editSong.jsp").forward(request, response);
+                } catch (NumberFormatException e) {
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=songs");
+                }
                 break;
 
             default:
@@ -54,20 +56,35 @@ public class SongServlet extends HttpServlet {
         String action = request.getParameter("action");
         SongService service = new SongService();
 
+        if ("delete".equals(action)) {
+            try {
+                int deleteId = Integer.parseInt(request.getParameter("id"));
+                boolean deleted = service.deleteSong(deleteId);
+                if (deleted) {
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=songs&songSuccess=deleted");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=songs&songError=notfound");
+                }
+            } catch (NumberFormatException e) {
+                response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=songs");
+            }
+            return;
+        }
+
         String title  = request.getParameter("title");
         String artist = request.getParameter("artist");
         String genre  = request.getParameter("genre");
 
         if ("add".equals(action)) {
 
-            // Only check that title and artist are not empty (no character restrictions)
             if (ValidationUtil.isEmpty(title)) {
                 request.setAttribute("error", "Song title is required.");
                 request.getRequestDispatcher("/WEB-INF/pages/addSong.jsp").forward(request, response);
                 return;
             }
-            if (ValidationUtil.isEmpty(artist)) {
-                request.setAttribute("error", "Artist name is required.");
+            // isValidArtistName enforces min 2 chars (isEmpty alone let single chars through)
+            if (!ValidationUtil.isValidArtistName(artist)) {
+                request.setAttribute("error", "Artist name must be at least 2 characters.");
                 request.getRequestDispatcher("/WEB-INF/pages/addSong.jsp").forward(request, response);
                 return;
             }
@@ -77,7 +94,6 @@ public class SongServlet extends HttpServlet {
                 return;
             }
 
-            // Duplicate check — same title + artist cannot already exist
             if (service.songExists(title, artist, -1)) {
                 request.setAttribute("error", "A song with the same title and artist already exists.");
                 request.getRequestDispatcher("/WEB-INF/pages/addSong.jsp").forward(request, response);
@@ -94,17 +110,22 @@ public class SongServlet extends HttpServlet {
             }
 
         } else if ("edit".equals(action)) {
-            int id = Integer.parseInt(request.getParameter("id"));
+            int id;
+            try {
+                id = Integer.parseInt(request.getParameter("id"));
+            } catch (NumberFormatException e) {
+                response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=songs");
+                return;
+            }
 
-            // Only check that title and artist are not empty (no character restrictions)
             if (ValidationUtil.isEmpty(title)) {
                 request.setAttribute("error", "Song title is required.");
                 request.setAttribute("song", service.getSongById(id));
                 request.getRequestDispatcher("/WEB-INF/pages/editSong.jsp").forward(request, response);
                 return;
             }
-            if (ValidationUtil.isEmpty(artist)) {
-                request.setAttribute("error", "Artist name is required.");
+            if (!ValidationUtil.isValidArtistName(artist)) {
+                request.setAttribute("error", "Artist name must be at least 2 characters.");
                 request.setAttribute("song", service.getSongById(id));
                 request.getRequestDispatcher("/WEB-INF/pages/editSong.jsp").forward(request, response);
                 return;
@@ -116,7 +137,7 @@ public class SongServlet extends HttpServlet {
                 return;
             }
 
-            // Duplicate check — exclude the current song's own id so it doesn't flag itself
+            // pass current song ID so we don't flag it as a duplicate of itself
             if (service.songExists(title, artist, id)) {
                 request.setAttribute("error", "Another song with the same title and artist already exists.");
                 request.setAttribute("song", service.getSongById(id));

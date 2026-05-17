@@ -8,18 +8,20 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import org.mindrot.jbcrypt.BCrypt;
 
+// all DB operations for users — registration, login, lockout, profile, admin
 public class UserService {
 
     private static final int MAX_ATTEMPTS    = 3;
     private static final int LOCKOUT_MINUTES = 1;
 
-    // ── Registration ─────────────────────────────────────────────────
+    // ── Registration ──────────────────────────────────────────────────
 
+    // passwords and security answers are both BCrypt hashed before storing
     public boolean registerUser(UserModel user) {
         String sql = "INSERT INTO users (name, email, password, security_question, security_answer) " +
                      "VALUES (?, ?, ?, ?, ?)";
         String hashedPassword = BCrypt.hashpw(user.getPassword(), BCrypt.gensalt());
-        String hashedAnswer = user.getSecurityAnswer() != null
+        String hashedAnswer   = user.getSecurityAnswer() != null
             ? BCrypt.hashpw(user.getSecurityAnswer().trim().toLowerCase(), BCrypt.gensalt())
             : null;
         try (Connection conn = DbConfig.getConnection();
@@ -50,6 +52,7 @@ public class UserService {
 
     // ── Login + Lockout ───────────────────────────────────────────────
 
+    // returns null if credentials don't match
     public UserModel validateUser(String email, String password) {
         String sql = "SELECT id, name, email, password, role FROM users WHERE email = ?";
         try (Connection conn = DbConfig.getConnection();
@@ -70,6 +73,7 @@ public class UserService {
         return null;
     }
 
+    // returns the lockout expiry time if still active, null otherwise
     public LocalDateTime getLockoutTime(String email) {
         String sql = "SELECT locked_until FROM login_attempts WHERE email = ?";
         try (Connection conn = DbConfig.getConnection();
@@ -81,7 +85,7 @@ public class UserService {
                 if (ts != null) {
                     LocalDateTime until = ts.toLocalDateTime();
                     if (until.isAfter(LocalDateTime.now())) return until;
-                    clearLockout(email);
+                    clearLockout(email); // expired — clean it up
                 }
             }
         } catch (SQLException e) {
@@ -90,6 +94,7 @@ public class UserService {
         return null;
     }
 
+    // increments failed attempt counter; locks the account after MAX_ATTEMPTS
     public int recordFailedAttempt(String email) {
         String upsert = "INSERT INTO login_attempts (email, attempts) VALUES (?, 1) " +
                         "ON DUPLICATE KEY UPDATE attempts = attempts + 1";
@@ -97,7 +102,8 @@ public class UserService {
         String lock   = "UPDATE login_attempts SET locked_until = ? WHERE email = ?";
         try (Connection conn = DbConfig.getConnection()) {
             try (PreparedStatement ps = conn.prepareStatement(upsert)) {
-                ps.setString(1, email); ps.executeUpdate();
+                ps.setString(1, email);
+                ps.executeUpdate();
             }
             int attempts = 0;
             try (PreparedStatement ps = conn.prepareStatement(select)) {
@@ -123,7 +129,8 @@ public class UserService {
         String sql = "DELETE FROM login_attempts WHERE email = ?";
         try (Connection conn = DbConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, email); ps.executeUpdate();
+            ps.setString(1, email);
+            ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Clear lockout error: " + e.getMessage());
         }
@@ -135,15 +142,11 @@ public class UserService {
         return searchAndSortUsers("", "name", "asc");
     }
 
-    /**
-     * Admin: search users by name or email, sort by column asc/desc.
-     * @param keyword  search term (empty = all)
-     * @param sortBy   name | email | role
-     * @param order    asc | desc
-     */
+    // admin user table — searchable and sortable
     public List<UserModel> searchAndSortUsers(String keyword, String sortBy, String order) {
         List<UserModel> users = new ArrayList<>();
 
+        // whitelist columns to prevent injection in ORDER BY
         String col = "name";
         if ("email".equals(sortBy)) col = "email";
         else if ("role".equals(sortBy)) col = "role";
@@ -179,12 +182,55 @@ public class UserService {
         return users;
     }
 
-    // ── Profile: fetch full user including security question ──────────
+    // ── Admin: delete a user ──────────────────────────────────────────
 
-    /**
-     * Returns the full user record including security_question (NOT the answer hash).
-     * Used by the profile page to display current security question.
-     */
+    // also removes any lockout record for that email; caller checks admin != self
+    public boolean deleteUser(int userId) {
+        String getEmail = "SELECT email FROM users WHERE id = ?";
+        String delLock  = "DELETE FROM login_attempts WHERE email = ?";
+        String delUser  = "DELETE FROM users WHERE id = ?";
+        try (Connection conn = DbConfig.getConnection()) {
+            String email = null;
+            try (PreparedStatement ps = conn.prepareStatement(getEmail)) {
+                ps.setInt(1, userId);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) email = rs.getString("email");
+            }
+            if (email != null) {
+                try (PreparedStatement ps = conn.prepareStatement(delLock)) {
+                    ps.setString(1, email);
+                    ps.executeUpdate();
+                }
+            }
+            try (PreparedStatement ps = conn.prepareStatement(delUser)) {
+                ps.setInt(1, userId);
+                return ps.executeUpdate() > 0;
+            }
+        } catch (SQLException e) {
+            System.err.println("Delete user error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // ── Admin: update name + role ─────────────────────────────────────
+
+    public boolean updateUser(int userId, String newName, String newRole) {
+        String sql = "UPDATE users SET name = ?, role = ? WHERE id = ?";
+        try (Connection conn = DbConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newName);
+            ps.setString(2, newRole);
+            ps.setInt(3, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Update user error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // ── Profile ───────────────────────────────────────────────────────
+
+    // loads the full user including security_question (answer hash is never returned)
     public UserModel getUserWithSecurity(int userId) {
         String sql = "SELECT id, name, email, role, security_question FROM users WHERE id = ?";
         try (Connection conn = DbConfig.getConnection();
@@ -205,8 +251,6 @@ public class UserService {
         }
         return null;
     }
-
-    // ── Profile Management ────────────────────────────────────────────
 
     public boolean updateName(int userId, String newName) {
         String sql = "UPDATE users SET name = ? WHERE id = ?";
@@ -247,10 +291,7 @@ public class UserService {
         }
     }
 
-    /**
-     * Updates the security question and hashed answer for a user.
-     * Called from the profile page — allows old accounts to set one up.
-     */
+    // lets older accounts (created before security questions existed) set one up
     public boolean updateSecurityQuestion(int userId, String question, String plainAnswer) {
         String hashed = BCrypt.hashpw(plainAnswer.trim().toLowerCase(), BCrypt.gensalt());
         String sql = "UPDATE users SET security_question = ?, security_answer = ? WHERE id = ?";
@@ -281,6 +322,7 @@ public class UserService {
         return null;
     }
 
+    // answer is compared case-insensitively (trimmed + lowercased at registration)
     public boolean verifySecurityAnswer(String email, String answer) {
         String sql = "SELECT security_answer FROM users WHERE email = ?";
         try (Connection conn = DbConfig.getConnection();

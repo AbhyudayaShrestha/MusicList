@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
+// profile page — three independent sections: name, password, security question
 @WebServlet("/profile")
 public class ProfileServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
@@ -25,7 +26,7 @@ public class ProfileServlet extends HttpServlet {
             return;
         }
 
-        // Load full user record including security_question from DB
+        // fetch the full record so the JSP has the security question available
         UserService service = new UserService();
         UserModel fullUser = service.getUserWithSecurity(sessionUser.getId());
         if (fullUser != null) {
@@ -49,15 +50,14 @@ public class ProfileServlet extends HttpServlet {
         UserService service = new UserService();
 
         switch (action == null ? "" : action) {
-            case "updateProfile":     handleProfileUpdate(request, response, user, service);     break;
-            case "changePassword":    handlePasswordChange(request, response, user, service);    break;
-            case "updateSecurity":    handleSecurityUpdate(request, response, user, service);    break;
+            case "updateProfile":  handleProfileUpdate(request, response, user, service);  break;
+            case "changePassword": handlePasswordChange(request, response, user, service); break;
+            case "updateSecurity": handleSecurityUpdate(request, response, user, service); break;
             default: response.sendRedirect(request.getContextPath() + "/profile");
         }
     }
 
-    // ── Update display name ───────────────────────────────────────────
-
+    // update display name
     private void handleProfileUpdate(HttpServletRequest request, HttpServletResponse response,
                                      UserModel user, UserService service)
             throws ServletException, IOException {
@@ -73,7 +73,7 @@ public class ProfileServlet extends HttpServlet {
 
         if (service.updateName(user.getId(), name)) {
             user.setName(name);
-            request.getSession().setAttribute("loggedUser", user);
+            request.getSession().setAttribute("loggedUser", user); // keep session in sync
             request.setAttribute("profileSuccess", "Profile updated successfully.");
         } else {
             request.setAttribute("profileError", "Update failed. Please try again.");
@@ -81,8 +81,7 @@ public class ProfileServlet extends HttpServlet {
         loadAndForward(request, response, user, service);
     }
 
-    // ── Change password ───────────────────────────────────────────────
-
+    // change password — requires current password first
     private void handlePasswordChange(HttpServletRequest request, HttpServletResponse response,
                                       UserModel user, UserService service)
             throws ServletException, IOException {
@@ -118,8 +117,7 @@ public class ProfileServlet extends HttpServlet {
         loadAndForward(request, response, user, service);
     }
 
-    // ── Update / set security question ───────────────────────────────
-
+    // set or update the security question (used by the forgot-password flow)
     private void handleSecurityUpdate(HttpServletRequest request, HttpServletResponse response,
                                       UserModel user, UserService service)
             throws ServletException, IOException {
@@ -146,8 +144,7 @@ public class ProfileServlet extends HttpServlet {
         loadAndForward(request, response, user, service);
     }
 
-    // ── Helper: reload full user then forward ─────────────────────────
-
+    // reload the full user record so the page always shows fresh data
     private void loadAndForward(HttpServletRequest request, HttpServletResponse response,
                                 UserModel user, UserService service)
             throws ServletException, IOException {
